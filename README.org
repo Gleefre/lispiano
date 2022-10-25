@@ -1,0 +1,15 @@
+#+title: Lispiano
+#+author: Grolter Bell
+#+email: varedif.a.s@gmail.com
+#+description: Piano for you keyboard written in CL
+#+language: en
+
+* installation
+  work in progress...
+* using
+  work in progress...
+* todo list
+** TODO transform script to a system
+** TODO generate notes from scratch/one note instead of using predefined files for each one
+** TODO add different keyboard layouts
+** TODO creating user map for notes on a keyboard
