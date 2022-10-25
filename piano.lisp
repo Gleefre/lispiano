@@ -20,7 +20,7 @@
     (#\. . 55) (#\/ . 56) (#\' . 52)))
 
 (defparameter *note-shift* -19)
-(defparameter *notes-folder* "/home/grolter/portacle/piano_c4/")
+(defparameter *notes-folder* "./piano_c4/")
 
 (defun on-start ()
   (sdl2-mixer:init :wave)
