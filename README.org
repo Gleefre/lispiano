@@ -13,3 +13,4 @@
 ** TODO generate notes from scratch/one note instead of using predefined files for each one
 ** TODO add different keyboard layouts
 ** TODO creating user map for notes on a keyboard
+** TODO fix ESC issuex
