@@ -1,13 +1,19 @@
-#-quicklisp
-(let ((quicklisp-init (merge-pathnames ".quicklisp/setup.lisp"
-                                       (user-homedir-pathname))))
-  (when (probe-file quicklisp-init)
-    (load quicklisp-init)))
-
 (ql:quickload :sketch)
 (ql:quickload :sdl2-mixer)
 
 (use-package :sketch)
+
+;; Fit -- function to fit desired width/height to rectangle on screen
+(defun fit (width height from-width from-height &optional (to-x 0) (to-y 0) (from-x 0) (from-y 0) max-scale)
+  (translate from-x from-y)
+  (let* ((scale (min (/ from-width width)
+                     (/ from-height height)
+                     (if max-scale max-scale 10000)))
+         (x-shift (/ (- from-width (* width scale)) 2))
+         (y-shift (/ (- from-height (* height scale)) 2)))
+    (translate x-shift y-shift)
+    (scale scale))
+  (translate (- to-x) (- to-y)))
 
 (defparameter *unit* 70)
 (defparameter *keys* "q2w3er5t6y7ui9o0p[=]azsxcfvgbnjmk,l./'")
@@ -32,8 +38,7 @@
   (sdl2-mixer:close-audio)
   (loop for (keycode . (i . chunk)) in notes
         do (sdl2-mixer:free-chunk chunk))
-  (sdl2-mixer:quit)
-  t)
+  (sdl2-mixer:quit))
 
 (defun note-filename (note-index)
   (format nil "~a~a.wav" *notes-folder* (+ *note-shift* note-index)))
@@ -61,6 +66,7 @@
                       (pressed-notes ())
                       (_ (on-start))
                       (notes (make-notes)))
+  (fit (* 12 *unit*) (* 6 *unit*) width height)
   (loop for char across *keys*
         for i from 1
         for black = (member (mod i 12)
@@ -87,29 +93,30 @@
           (+ 5 (* *unit* 4)))))
 
 (defmethod kit.sdl2:keyboard-event ((app key-piano) state ts repeat? keysym)
-  (unless repeat?
-    (let ((note (cdr (assoc (sdl2:scancode-value keysym) (slot-value app 'notes)))))
-      (when note
-        (if (eq state :keydown)
-            (play-note note)
-            (stop-note note)))))
-  (setf (gethash (sdl2:scancode-value keysym) (slot-value app 'pressed))
-        (eq state :keydown))
-  (let ((note (sdl2:scancode keysym)))
-    (if (eq state :keydown)
-        (pushnew note (slot-value app 'pressed-notes))
-        (setf (slot-value app 'pressed-notes)
-              (remove note (slot-value app 'pressed-notes) :test #'equal))))
-  (kit.sdl2:render app))
+  (unless (eq :scancode-escape (sdl2:scancode keysym))
+    (unless repeat?
+      (let ((note (cdr (assoc (sdl2:scancode-value keysym) (slot-value app 'notes)))))
+	(when note
+	  (if (eq state :keydown)
+	      (play-note note)
+              (stop-note note)))))
+    (setf (gethash (sdl2:scancode-value keysym) (slot-value app 'pressed))
+	  (eq state :keydown))
+    (let ((note (sdl2:scancode keysym)))
+      (if (eq state :keydown)
+	  (pushnew note (slot-value app 'pressed-notes))
+          (setf (slot-value app 'pressed-notes)
+		(remove note (slot-value app 'pressed-notes) :test #'equal))))
+    (kit.sdl2:render app)))
 
-#+t (defparameter *stop?* nil)
-
-(defmethod kit.sdl2:close-window :after ((app key-piano))
+(defmethod kit.sdl2:close-window :before ((app key-piano))
   (with-slots (notes) app
-    (on-close notes))
-  #+t (setf *stop?* t))
+    (on-close notes)))
 
-(let ((app (make-instance 'key-piano :fullscreen nil)))
-  (setf (kit.sdl2:idle-render app) nil)
-  (kit.sdl2:render app)
-  #+t (loop until *stop?* do (sleep 1)))
+(defun start ()
+  (sdl2:make-this-thread-main
+   (lambda ()
+     (let ((sketch::*build* t))
+       (make-instance 'key-piano :resizable t)))))
+
+(start)
