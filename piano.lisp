@@ -1,19 +1,8 @@
-(ql:quickload :sketch)
-(ql:quickload :sdl2-mixer)
+(defpackage #:lispiano
+  (:use #:cl #:sketch #:sketch-fit)
+  (:export #:start))
 
-(use-package :sketch)
-
-;; Fit -- function to fit desired width/height to rectangle on screen
-(defun fit (width height from-width from-height &optional (to-x 0) (to-y 0) (from-x 0) (from-y 0) max-scale)
-  (translate from-x from-y)
-  (let* ((scale (min (/ from-width width)
-                     (/ from-height height)
-                     (if max-scale max-scale 10000)))
-         (x-shift (/ (- from-width (* width scale)) 2))
-         (y-shift (/ (- from-height (* height scale)) 2)))
-    (translate x-shift y-shift)
-    (scale scale))
-  (translate (- to-x) (- to-y)))
+(in-package #:lispiano)
 
 (defparameter *unit* 70)
 (defparameter *keys* "q2w3er5t6y7ui9o0p[=]azsxcfvgbnjmk,l./'")
@@ -26,19 +15,8 @@
     (#\. . 55) (#\/ . 56) (#\' . 52)))
 
 (defparameter *note-shift* -19)
-(defparameter *notes-folder* "./piano_c4/")
-
-(defun on-start ()
-  (sdl2-mixer:init :wave)
-  (sdl2-mixer:open-audio 22050 :s16sys 1 1024)
-  (sdl2-mixer:allocate-channels 100))
-
-(defun on-close (notes)
-  (sdl2-mixer:halt-channel -1)
-  (sdl2-mixer:close-audio)
-  (loop for (keycode . (i . chunk)) in notes
-        do (sdl2-mixer:free-chunk chunk))
-  (sdl2-mixer:quit))
+(defparameter *notes-folder*
+  (asdf:system-relative-pathname :lispiano "./piano_c4/"))
 
 (defun note-filename (note-index)
   (format nil "~a~a.wav" *notes-folder* (+ *note-shift* note-index)))
@@ -58,13 +36,16 @@
         for i from 0
         collect (cons keycode (make-note i))))
 
+(defun close-notes (notes)
+  (loop for (keycode . (i . chunk)) in notes
+        do (sdl2-mixer:free-chunk chunk)))
+
 ;;; App
 
 (defsketch key-piano ((width (* 12 *unit*))
                       (height (* 6 *unit*))
                       (pressed (make-hash-table :size 50))
                       (pressed-notes ())
-                      (_ (on-start))
                       (notes (make-notes)))
   (fit (* 12 *unit*) (* 6 *unit*) width height)
   (loop for char across *keys*
@@ -109,14 +90,15 @@
 		(remove note (slot-value app 'pressed-notes) :test #'equal))))
     (kit.sdl2:render app)))
 
-(defmethod kit.sdl2:close-window :before ((app key-piano))
-  (with-slots (notes) app
-    (on-close notes)))
-
-(defun start ()
-  (sdl2:make-this-thread-main
-   (lambda ()
-     (let ((sketch::*build* t))
-       (make-instance 'key-piano :resizable t)))))
-
-(start)
+(define-start-function (start) key-piano (:resizable t)
+  (:on-close (app)
+    (close-notes (key-piano-notes app)))
+  (:start
+    (sdl2-mixer:init :wave)
+    (sdl2-mixer:open-audio 22050 :s16sys 1 1024)
+    (sdl2-mixer:allocate-channels 100))
+  (:quit
+    (sdl2-mixer:halt-channel -1)
+    (sdl2-mixer:close-audio)
+    (sdl2-mixer:quit)
+    (print 'bye!)))
