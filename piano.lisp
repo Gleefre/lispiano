@@ -14,7 +14,7 @@
     (#\b . 5) (#\n . 17) (#\j . 13) (#\m . 16) (#\k . 14) (#\, . 54) (#\l . 15)
     (#\. . 55) (#\/ . 56) (#\' . 52)))
 
-(defparameter *note-shift* -19)
+(defparameter *note-shift* -24)
 (defparameter *notes-folder*
   (asdf:system-relative-pathname :lispiano "./piano_c4/"))
 
