@@ -1,12 +1,23 @@
 #+title: Lispiano
 #+author: Grolter Bell
 #+email: varedif.a.s@gmail.com
-#+description: Piano for you keyboard written in CL
+#+description: Piano for your keyboard written in CL
 #+language: en
 
 * Depends on
 ** sketch
-   See [[https://github.com/vydd/sketch][github repo]] for more information on sketch requirements.
+   Uses ~define-start-function~ feature that is available in the
+   ~define-start-function-2~ branch of my [[https://github.com/Gleefre/sketch/tree/define-start-function-2][fork]] of the library.
+   You can clone it with
+   #+BEGIN_SRC bash
+   git clone -b define-start-function-2 https://github.com/Gleefre/sketch
+   #+END_SRC
+   See the original [[https://github.com/vydd/sketch][github repo]] for more information on sketch requirements.
+** sketch-fit
+   Little utility: [[https://github.com/Gleefre/sketch-fit][github repo]]. Needs to be cloned to your local-projects folder:
+   #+BEGIN_SRC bash
+   git clone https://github.com/Gleefre/sketch-fit
+   #+END_SRC
 ** sdl2-mixer
    See [[https://github.com/lispgames/cl-sdl2-mixer][github repo]].
 ** Foreign dependencies
@@ -15,19 +26,18 @@
 *** SDL2 Image & SDL2 TTF & SDL2 Mixer
     These are parts of SDL2 project needed by lispiano.
 * Installation
-  You can download source code from this repository:
-  #+begin_src bash
-  git clone git@github.com:Gleefre/lispiano.git
-  #+end_src
+  You need to clone this repository to your local-projects folder:
+   #+BEGIN_SRC bash
+   git clone https://github.com/Gleefre/lispiano
+   #+END_SRC
 * Usage
-  Right now it can be runed by loading file from lisp REPL.
-  For example you can run it with sbcl using the following line:
-  #+begin_src bash
-  sbcl --load piano
-  #+end_src
+  Load the system:
+  #+BEGIN_SRC lisp
+  (ql:quickload :lispiano)
+  ; or with asdf
+  (asdf:load-system :lispiano)
+  #+END_SRC
 * todo list
-** TODO Transform script to a system.
 ** TODO Generate notes from scratch/one note instead of using predefined files for each one.
-** TODO Add different keyboard layouts.p
+** TODO Add different keyboard layouts.
 ** TODO Creating user map for notes on a keyboard.
-** TODO Fix ESc issue.
