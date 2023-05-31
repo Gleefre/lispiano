@@ -1,5 +1,7 @@
 (defpackage #:lispiano
   (:use #:cl #:sketch #:sketch-fit)
+  (:local-nicknames (#:harmony #:org.shirakumo.fraf.harmony)
+                    (#:mixed   #:org.shirakumo.fraf.mixed))
   (:export #:start #:start-toplevel))
 
 (in-package #:lispiano)
@@ -18,18 +20,18 @@
 (defparameter *notes-folder*
   (asdf:system-relative-pathname :lispiano "./piano_c4/"))
 
-(defun note-filename (note-index)
-  (format nil "~a~a.wav" *notes-folder* (+ *note-shift* note-index)))
+(defun note-pathname (note-index)
+  (pathname (format nil "~a~a.wav" *notes-folder* (+ *note-shift* note-index))))
 
 (defun make-note (note-index)
-  (let* ((filename (note-filename note-index)))
-    (cons note-index (sdl2-mixer:load-wav filename))))
+  (let* ((pathname (note-pathname note-index)))
+    (cons note-index (harmony:create pathname))))
 
 (defun play-note (note)
-  (sdl2-mixer:play-channel (car note) (cdr note) 0))
+  (harmony:play (cdr note) :synchronize T))
 
 (defun stop-note (note)
-  (sdl2-mixer:halt-channel (car note)))
+  (mixed:seek (harmony:stop (cdr note)) 0))
 
 (defun make-notes ()
   (loop for (char . keycode) in *char-keycode*
@@ -38,7 +40,7 @@
 
 (defun close-notes (notes)
   (loop for (keycode . (i . chunk)) in notes
-        do (sdl2-mixer:free-chunk chunk)))
+        do (mixed:free chunk)))
 
 ;;; App
 
@@ -93,14 +95,10 @@
 (define-start-function (start) key-piano (:resizable t)
   (:setup (app)
     (setf (kit.sdl2:idle-render app) nil))
+  (:start
+    (harmony:maybe-start-simple-server))
   (:on-close (app)
     (close-notes (key-piano-notes app)))
-  (:start
-    (sdl2-mixer:init :wave)
-    (sdl2-mixer:open-audio 22050 :s16sys 1 1024)
-    (sdl2-mixer:allocate-channels 100))
   (:quit
-    (sdl2-mixer:halt-channel -1)
-    (sdl2-mixer:close-audio)
-    (sdl2-mixer:quit)
-    (print 'bye!)))
+   (harmony:stop harmony:*server*)
+   (print 'bye!)))
