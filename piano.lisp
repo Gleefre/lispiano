@@ -1,6 +1,6 @@
 (defpackage #:lispiano
   (:use #:cl #:sketch #:sketch-fit)
-  (:export #:start))
+  (:export #:start #:start-toplevel))
 
 (in-package #:lispiano)
 
@@ -91,6 +91,8 @@
     (kit.sdl2:render app)))
 
 (define-start-function (start) key-piano (:resizable t)
+  (:setup (app)
+    (setf (kit.sdl2:idle-render app) nil))
   (:on-close (app)
     (close-notes (key-piano-notes app)))
   (:start
