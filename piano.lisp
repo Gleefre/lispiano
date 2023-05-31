@@ -92,6 +92,10 @@
                 (remove note (slot-value app 'pressed-notes) :test #'equal))))
     (kit.sdl2:render app)))
 
+(when (find-symbol (string-upcase "define-start-function") :sketch)
+  (push :sketch-start-function *features*))
+
+#+sketch-start-function
 (define-start-function (start) key-piano (:resizable t)
   (:setup (app)
     (setf (kit.sdl2:idle-render app) nil))
@@ -102,3 +106,27 @@
   (:quit
    (harmony:stop harmony:*server*)
    (print 'bye!)))
+
+#-sketch-start-function
+(PROGN
+  (DEFMETHOD SETUP :BEFORE ((APP KEY-PIANO) &KEY &ALLOW-OTHER-KEYS)
+    (DECLARE (IGNORABLE APP))
+    (SETF (KIT.SDL2:IDLE-RENDER APP) NIL))
+  (DEFMETHOD KIT.SDL2:CLOSE-WINDOW :BEFORE ((APP KEY-PIANO))
+    (DECLARE (IGNORABLE APP))
+    (CLOSE-NOTES (KEY-PIANO-NOTES APP)))
+  (DEFUN START (&REST INITARGS111671 &KEY &ALLOW-OTHER-KEYS)
+    (SKETCH::INITIALIZE-SKETCH)
+    (HARMONY:MAYBE-START-SIMPLE-SERVER)
+    (APPLY #'MAKE-INSTANCE 'KEY-PIANO
+           (APPEND INITARGS111671 '(:RESIZABLE T))))
+  (DEFUN START-TOPLEVEL ()
+    (SDL2:MAKE-THIS-THREAD-MAIN
+     (LAMBDA ()
+       (LET ((SKETCH::*BUILD* T))
+         (SKETCH::INITIALIZE-SKETCH)
+         (HARMONY:MAYBE-START-SIMPLE-SERVER)
+         (MAKE-INSTANCE 'KEY-PIANO :RESIZABLE T))))
+    (HARMONY:STOP HARMONY:*SERVER*)
+    (PRINT 'BYE!))
+  (VALUES 'START 'START-TOPLEVEL))
