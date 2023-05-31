@@ -77,17 +77,17 @@
   (unless (eq :scancode-escape (sdl2:scancode keysym))
     (unless repeat?
       (let ((note (cdr (assoc (sdl2:scancode-value keysym) (slot-value app 'notes)))))
-	(when note
-	  (if (eq state :keydown)
-	      (play-note note)
+        (when note
+          (if (eq state :keydown)
+              (play-note note)
               (stop-note note)))))
     (setf (gethash (sdl2:scancode-value keysym) (slot-value app 'pressed))
-	  (eq state :keydown))
+          (eq state :keydown))
     (let ((note (sdl2:scancode keysym)))
       (if (eq state :keydown)
-	  (pushnew note (slot-value app 'pressed-notes))
+          (pushnew note (slot-value app 'pressed-notes))
           (setf (slot-value app 'pressed-notes)
-		(remove note (slot-value app 'pressed-notes) :test #'equal))))
+                (remove note (slot-value app 'pressed-notes) :test #'equal))))
     (kit.sdl2:render app)))
 
 (define-start-function (start) key-piano (:resizable t)
